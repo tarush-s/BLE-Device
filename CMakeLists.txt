@@ -4,3 +4,4 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(BLE)
 
 target_sources(app PRIVATE src/main.c)
+target_sources_ifdef(CONFIG_BLEFUNCTION app PRIVATE src/ble.c)

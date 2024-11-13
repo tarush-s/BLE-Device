@@ -1,0 +1,5 @@
+source "Kconfig.zephyr"
+
+config BLEFUNCTION
+	bool "Enable my function"
+	default n
