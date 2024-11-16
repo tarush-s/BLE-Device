@@ -133,11 +133,52 @@ static void on_disconnected(struct bt_conn *conn, uint8_t reason)
 	dk_set_led_off(CON_STATUS_LED);
 }
 
+/*Callback fucntion to be called when security changed*/
+static void on_security_changed(struct bt_conn *conn, bt_security_t level, enum bt_security_err err)
+{
+	char addr[BT_ADDR_LE_STR_LEN];
+
+	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+
+	if (!err) {
+		LOG_INF("Security changed: %s level %u\n", addr, level);
+	} else {
+		LOG_INF("Security failed: %s level %u err %d\n", addr, level, err);
+	}
+}
+
 /*Register the connected and disconnected callbacks*/
 struct bt_conn_cb connection_callbacks = {
+	/*BLE pairing successful*/
 	.connected = on_connected,
+	/*BLE connection diconnected*/
 	.disconnected = on_disconnected,
+	/*Security protocol changed */
+	.security_changed = on_security_changed,
 };
+
+/*Function to print the passkey for central device*/
+static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
+{
+	char addr[BT_ADDR_LE_STR_LEN];
+	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+	LOG_INF("Passkey for %s: %06u\n", addr, passkey);
+}
+
+/*Function to nptify when the pairing process has failed*/
+static void auth_cancel(struct bt_conn *conn)
+{
+	char addr[BT_ADDR_LE_STR_LEN];
+	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+	LOG_INF("Pairing cancelled: %s\n", addr);
+}
+
+/*Declare the authentication callback structure*/
+static struct bt_conn_auth_cb conn_auth_callbacks = {
+	.passkey_display = auth_passkey_display,
+	.cancel = auth_cancel,
+};
+
 
 static int init_button(void)
 {
@@ -175,6 +216,13 @@ int main(void)
 		LOG_ERR("Bluetooth init failed (err %d)\n", err);
 		return -1;
 	}
+
+	err = bt_conn_auth_cb_register(&conn_auth_callbacks);
+	if (err) {
+		LOG_INF("Failed to register authorization callbacks.\n");
+		return -1;
+	}
+	
 	bt_conn_cb_register(&connection_callbacks);
 
         err = my_lbs_init(&app_callbacks);
@@ -192,11 +240,10 @@ int main(void)
 
 	LOG_INF("Advertising successfully started\n");
 
-        while(1){
-
-                dk_set_led(RUN_STATUS_LED, (++blink_status) % 2);
+	while(1){
+		dk_set_led(RUN_STATUS_LED, (++blink_status) % 2);
 		k_sleep(K_MSEC(RUN_LED_BLINK_INTERVAL));
-        }
+	}
 }
 
 /*Thread defined to send sensor data*/

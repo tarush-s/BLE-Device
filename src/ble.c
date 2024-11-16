@@ -121,12 +121,12 @@ static ssize_t read_button(struct bt_conn *conn, const struct bt_gatt_attr *attr
 BT_GATT_SERVICE_DEFINE(my_lbs_svc, BT_GATT_PRIMARY_SERVICE(BT_UUID_LBS),
 		        /* Add the Button characteristic to support indication */
 		        BT_GATT_CHARACTERISTIC(BT_UUID_LBS_BUTTON, BT_GATT_CHRC_READ | BT_GATT_CHRC_INDICATE,
-					      BT_GATT_PERM_READ, read_button, NULL, &button_state),
+					      BT_GATT_PERM_READ_AUTHEN, read_button, NULL, &button_state),
                 /*Add the client characteristic configurator descriptor*/
                 BT_GATT_CCC(mylbsbc_ccc_cfg_changed, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),            
 		        /* Add the LED characteristic. */
 		        BT_GATT_CHARACTERISTIC(BT_UUID_LBS_LED, BT_GATT_CHRC_WRITE,
-					      BT_GATT_PERM_WRITE, NULL, write_led, NULL),
+					      BT_GATT_PERM_WRITE_AUTHEN, NULL, write_led, NULL),
                 /* Add the Sensor characteristic*/
                 BT_GATT_CHARACTERISTIC(BT_UUID_LBS_MYSENSOR,
 			            BT_GATT_CHRC_NOTIFY,
@@ -134,16 +134,16 @@ BT_GATT_SERVICE_DEFINE(my_lbs_svc, BT_GATT_PRIMARY_SERVICE(BT_UUID_LBS),
 			            NULL),
                 /*Add the client characteristic configurator descriptor*/
 	            BT_GATT_CCC(mylbsbc_ccc_mysensor_cfg_changed,
-		                BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
+		                BT_GATT_PERM_READ_AUTHEN | BT_GATT_PERM_WRITE_AUTHEN),
 				
-				/* Add the Sensor characteristic*/
+				/* Add the econd Sensor characteristic*/
                 BT_GATT_CHARACTERISTIC(BT_UUID_LBS_MYSENSOR2,
 			            BT_GATT_CHRC_NOTIFY,
 			            BT_GATT_PERM_NONE, NULL, NULL,
 			            NULL),
                 /*Add the client characteristic configurator descriptor*/
 	            BT_GATT_CCC(mylbsbc_ccc_mysensor2_cfg_changed,
-		                BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
+		                BT_GATT_PERM_READ_AUTHEN | BT_GATT_PERM_WRITE_AUTHEN),
 
 );
 
@@ -172,7 +172,7 @@ int my_lbs_send_button_state_indicate(bool button_state)
 	return bt_gatt_indicate(NULL, &ind_params);
 }
 
-/**/
+/* Function to check if central has subscribed to sensor 1 value characteristic*/
 int my_lbs_send_sensor_notify(uint32_t sensor_value)
 {
 	if (!notify_mysensor_enabled) {
@@ -184,6 +184,7 @@ int my_lbs_send_sensor_notify(uint32_t sensor_value)
 			      sizeof(sensor_value));
 }
 
+/* Function to check if central has subscribed to sensor 1 value characteristic*/
 int my_lbs_send_sensor2_notify(uint32_t sensor_value)
 {
 	if (!notify_mysensor2_enabled) {
