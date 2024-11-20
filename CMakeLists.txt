@@ -5,3 +5,4 @@ project(BLE)
 
 target_sources(app PRIVATE src/main.c)
 target_sources_ifdef(CONFIG_BLEFUNCTION app PRIVATE src/ble.c)
+target_sources_ifdef(CONFIG_I2C app PRIVATE src/i2c.c)

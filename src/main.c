@@ -10,6 +10,10 @@
 #include "ble.h"
 #endif
 
+#ifdef CONFIG_BLEFUNCTION
+#include "i2c.h"
+#endif
+
 #define DEVICE_NAME CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 
@@ -31,7 +35,6 @@ LOG_MODULE_REGISTER(Application_code, LOG_LEVEL_INF);
 
 static bool app_button_state;
 static uint32_t app_sensor_value = 100;
-
 static uint32_t app_sensor2_value = 300;
 
 /*Function to simulate data*/
@@ -53,7 +56,8 @@ void send_data_thread(void)
 {
 	while(1){
 		/* Simulate data */
-		simulate_data();
+		// simulate_data();
+		read_sensor_data(&app_sensor_value, &app_sensor2_value);
 		/* Send notification, the function sends notifications only if a client is subscribed */
 		my_lbs_send_sensor_notify(app_sensor_value);
 
@@ -194,7 +198,7 @@ static int init_button(void)
 
 int main(void)
 {	
-        int blink_status = 0;
+	int blink_status = 0;
 	int err;
 
 	LOG_INF("Starting Application Code");
@@ -210,6 +214,12 @@ int main(void)
 		printk("Button init failed (err %d)\n", err);
 		return -1;
 	}
+
+	err = i2c_init();
+    if (err) {
+        LOG_ERR("I2C init failed (err %d)\n", err);
+        return -1;
+    }
 
 	err = bt_enable(NULL);
 	if (err) {
